@@ -6,12 +6,12 @@ namespace tensorflow {
 
 namespace functor {
 
-template <typename Device>
+template <typename Device, typename dummy>
 struct RaggedKnnOpFunctor {
-  void operator()(const Device& d, float *d_data, int *d_row_splits,
-                         int *d_vector_vertices, float *d_output,
-                         int num_neighbors, int num_features, int num_batch, int num_total_vertices);
+  void operator()(const Device& d, const float *d_data, const int *d_row_splits, int* d_output_indices,
+          float *d_output_distances, int num_neighbors, int num_features, int num_batch, int num_total_vertices);
 };
+
 
 }  // namespace functor
 

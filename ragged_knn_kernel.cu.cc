@@ -1,12 +1,15 @@
-//#define GOOGLE_CUDA
-//#if GOOGLE_CUDA
+//#define GOOGLE_CUDA 1
+
+
+#if GOOGLE_CUDA
+#define EIGEN_USE_GPU
 
 #include "ragged_knn_kernel.h"
+#include "tensorflow/core/util/gpu_kernel_helper.h"
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <cuda_runtime_api.h>
 #include "cub/cub/cub.cuh"
-#include "tensorflow/core/util/gpu_kernel_helper.h"
 
 
 namespace tensorflow {
@@ -53,13 +56,12 @@ template <typename T>__device__ void inline cswap(T*& a, T*& b)
     T* c(a); a=b; b=c;
 }
 
-__global__ void kernel_partial_find(float *d_data, int *d_row_splits,
-                         int *d_vector_vertices, float *d_output_x,
+__global__ void kernel_partial_find(const float *d_data, const int *d_row_splits, int *d_output_indices, float *d_output_distance,
                          int num_neighbors, int num_features, int num_batch) {
     using namespace cub;
 
 
-    combined*d_output = reinterpret_cast<combined*>(d_output_x);
+//    combined*d_output = reinterpret_cast<combined*>(d_output_x);
 
 
     // 40,960 bytes as cache for collection and reduction
@@ -93,8 +95,8 @@ __global__ void kernel_partial_find(float *d_data, int *d_row_splits,
 
     __syncthreads();
 
-    int num_neighbors_current = d_vector_vertices[my_batch_index];
     int split_current = d_row_splits[my_batch_index];
+    int num_neighbors_current = d_row_splits[my_batch_index+1] - split_current;
 
     float my_feature = d_data[split_current * num_features + my_vertex_index * num_features + threadIdx.x%num_features];
 
@@ -219,25 +221,42 @@ __global__ void kernel_partial_find(float *d_data, int *d_row_splits,
     __syncthreads();
 
     if (threadIdx.x < num_neighbors) {
-        d_output[split_current*num_neighbors + my_vertex_index*num_neighbors+threadIdx.x] = s_top_neighbors[threadIdx.x];
+        d_output_indices[split_current*num_neighbors + my_vertex_index*num_neighbors+threadIdx.x] = s_top_neighbors[threadIdx.x].index;
+        d_output_distance[split_current*num_neighbors + my_vertex_index*num_neighbors+threadIdx.x] = s_top_neighbors[threadIdx.x].distance;
     }
 }
-
 typedef Eigen::GpuDevice GPUDevice;
-struct RaggedKnnOpFunctor<GPUDevice> {
-  void operator()(const GPUDevice& d, float *d_data, int *d_row_splits,
-                         int *d_vector_vertices, float *d_output,
-                         int num_neighbors, int num_features, int num_batch, int num_total_vertices) {
-        kernel_partial_find<<<num_total_vertices, 256>>>(d_data, d_row_splits,
-                         d_vector_vertices, d_output, num_neighbors, num_features, num_batch);
+
+
+//template <>
+//struct RaggedKnnOpFunctor<GPUDevice> {
+//  void operator()(const GPUDevice& d, const float *d_data, const int *d_row_splits,
+//                         const int *d_vector_vertices, float *d_output,
+//                         int num_neighbors, int num_features, int num_batch, int num_total_vertices) {
+//      printf("Running GPU implementation\n");
+//
+//      kernel_partial_find<<<num_total_vertices, 256>>>(d_data, d_row_splits,
+//                         d_vector_vertices, d_output, num_neighbors, num_features, num_batch);
+//  }
+//};
+
+
+template <typename dummy>
+struct RaggedKnnOpFunctor<GPUDevice, dummy> {
+  void operator()(const GPUDevice& d, const float *d_data, const int *d_row_splits, int* d_output_indices,
+          float *d_output_distances, int num_neighbors, int num_features, int num_batch, int num_total_vertices) {
+      printf("\n\n\nINF: Running GPU implementation\n(TODO: remove this message after verification)\n\n\n");
+
+      kernel_partial_find<<<num_total_vertices, 256>>>(d_data, d_row_splits,
+                         d_output_indices, d_output_distances, num_neighbors, num_features, num_batch);
   }
 };
 
 
-
+template struct RaggedKnnOpFunctor<GPUDevice, int>;
 
 }
 }
 
 
-//#endif  // GOOGLE_CUDA
+#endif  // GOOGLE_CUDA
