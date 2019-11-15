@@ -3,13 +3,12 @@ import numpy as np
 
 
 
-rknn_op = tf.load_op_library('../ragged_knn_kernel.so')
+rknn_op = tf.load_op_library('/afs/cern.ch/work/s/sqasim/workspace_phd_1/Repos1/CudaTests/ragged_knn/ragged_knn_kernel.so')
 
 
 
 
-
-def rknn_ragged(values, num_neighbors):
+def rknn_ragged(values, num_neighbors, add_splits=False):
     """
     Returns a ragged tensor which contains nearest neighbors for each of the vertex.
 
@@ -29,8 +28,8 @@ def rknn_ragged(values, num_neighbors):
 
     row_splits = tf.cast(row_splits, tf.int32)
 
-    indices, distances = rknn_op.RaggedKnn(num_batch = int(num_batch), num_features =int(num_features),
-                      num_neighbors=int(num_neighbors), row_splits=row_splits, data=data)
+    indices, distances = rknn_op.RaggedKnn(num_features =int(num_features),
+                      num_neighbors=int(num_neighbors), row_splits=row_splits, data=data, add_splits=add_splits)
 
     return tf.RaggedTensor.from_row_splits(values=tf.reshape(indices, [-1, num_neighbors]), row_splits=row_splits),\
            tf.RaggedTensor.from_row_splits(values=tf.reshape(distances, [-1, num_neighbors]), row_splits=row_splits)

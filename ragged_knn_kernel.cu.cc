@@ -57,7 +57,7 @@ template <typename T>__device__ void inline cswap(T*& a, T*& b)
 }
 
 __global__ void kernel_partial_find(const float *d_data, const int *d_row_splits, int *d_output_indices, float *d_output_distance,
-                         int num_neighbors, int num_features, int num_batch) {
+                         int num_neighbors, int num_features, int num_batch, bool add_splits=false) {
     using namespace cub;
 
 
@@ -180,10 +180,10 @@ __global__ void kernel_partial_find(const float *d_data, const int *d_row_splits
         y[0] = {s_neighbors_new[threadIdx.x].index};
 
         __syncthreads();
-        if (threadIdx.x < 256) {
-            BlockRadixSortX(temp_storage).Sort(x, y);
-        }
-        __syncthreads();
+//        if (threadIdx.x < 256) {
+//            BlockRadixSortX(temp_storage).Sort(x, y);
+//        }
+//        __syncthreads();
 
 
         s_neighbors_new[threadIdx.x].distance = x[0];
@@ -208,7 +208,8 @@ __global__ void kernel_partial_find(const float *d_data, const int *d_row_splits
                 s_neighbors_new_2[mypos] = s_top_neighbors[threadIdx.x];
             }
         }
-        there = num_neighbors;
+//        there = num_neighbors;
+        there = min(num_neighbors, there+num_vertices_this_segment);
 
         __syncthreads();
 
@@ -221,7 +222,7 @@ __global__ void kernel_partial_find(const float *d_data, const int *d_row_splits
     __syncthreads();
 
     if (threadIdx.x < num_neighbors) {
-        d_output_indices[split_current*num_neighbors + my_vertex_index*num_neighbors+threadIdx.x] = s_top_neighbors[threadIdx.x].index;
+        d_output_indices[split_current*num_neighbors + my_vertex_index*num_neighbors+threadIdx.x] = split_current*add_splits + s_top_neighbors[threadIdx.x].index;
         d_output_distance[split_current*num_neighbors + my_vertex_index*num_neighbors+threadIdx.x] = s_top_neighbors[threadIdx.x].distance;
     }
 }
@@ -244,11 +245,11 @@ typedef Eigen::GpuDevice GPUDevice;
 template <typename dummy>
 struct RaggedKnnOpFunctor<GPUDevice, dummy> {
   void operator()(const GPUDevice& d, const float *d_data, const int *d_row_splits, int* d_output_indices,
-          float *d_output_distances, int num_neighbors, int num_features, int num_batch, int num_total_vertices) {
+          float *d_output_distances, int num_neighbors, int num_features, int num_batch, int num_total_vertices, bool add_splits) {
       printf("\n\n\nINF: Running GPU implementation\n(TODO: remove this message after verification)\n\n\n");
 
       kernel_partial_find<<<num_total_vertices, 256>>>(d_data, d_row_splits,
-                         d_output_indices, d_output_distances, num_neighbors, num_features, num_batch);
+                         d_output_indices, d_output_distances, num_neighbors, num_features, num_batch, add_splits);
   }
 };
 
