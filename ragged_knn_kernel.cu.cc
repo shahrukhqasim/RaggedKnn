@@ -246,7 +246,7 @@ template <typename dummy>
 struct RaggedKnnOpFunctor<GPUDevice, dummy> {
   void operator()(const GPUDevice& d, const float *d_data, const int *d_row_splits, int* d_output_indices,
           float *d_output_distances, int num_neighbors, int num_features, int num_batch, int num_total_vertices, bool add_splits) {
-      printf("\n\n\nINF: Running GPU implementation\n(TODO: remove this message after verification)\n\n\n");
+//      printf("\n\n\nINF: Running GPU implementation\n(TODO: remove this message after verification)\n\n\n");
 
       kernel_partial_find<<<num_total_vertices, 256>>>(d_data, d_row_splits,
                          d_output_indices, d_output_distances, num_neighbors, num_features, num_batch, add_splits);
