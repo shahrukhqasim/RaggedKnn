@@ -44,26 +44,24 @@ class RKNNTest(test.TestCase):
         n_batch = 2
         n_features = 3
         n_neighbors = 10
-        a = np.array([[0, 1000, 3000, 3500, 3700, 4800], [0, 500, 2500, 3500, 3600, 4900]])
-        b = np.random.uniform(size=(2, 5500 * 3))
-        c = np.array([[1000, 2000, 500, 200, 1100, 700], [500, 2000, 1000, 100, 1300, 600]])
-
+        a = np.array([0, 1000, 3000, 3500, 3700, 4800, 5500])
+        b = np.random.uniform(size=(5500, 3))
         a = tf.constant(a, dtype=tf.int32)
         b = tf.constant(b, dtype=tf.float32)
-        c = tf.constant(c, dtype=tf.int32)
         with self.test_session():
-            result = rknn_op.RaggedKnn(num_batch=int(n_batch), num_features=int(n_features),
-                                       num_neighbors=int(n_neighbors), row_splits=a, data=b)
+            result = rknn_op.RaggedKnn(num_neighbors=int(n_neighbors), row_splits=a, data=b, add_splits=False)
         # result = rknn.RaggedKnn(a,b)
 
     @test_util.run_gpu_only
     def test_uniform_test(self):
         num_batch = 32
         num_features = 256
-        num_neighbors = 120
-        num_vertices_per_batch = 3200
+        num_neighbors = 8
+        num_vertices_per_batch = 320
         data = np.random.uniform(size=(num_batch, num_vertices_per_batch, num_features))
         row_splits = np.arange(0, num_vertices_per_batch*(num_batch + 1), num_vertices_per_batch)
+
+        print(row_splits)
 
         data = tf.constant(data, dtype=tf.float32)
         row_splits = tf.constant(row_splits, dtype=tf.int32)
