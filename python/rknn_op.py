@@ -28,9 +28,7 @@ def rknn_ragged(values, num_neighbors, add_splits=False):
 
     row_splits = tf.cast(row_splits, tf.int32)
 
-    print("Running now")
     indices, distances = rknn_op.RaggedKnn(num_neighbors=int(num_neighbors), row_splits=row_splits, data=data, add_splits=add_splits)
-    print("Complete")
 
     return tf.RaggedTensor.from_row_splits(values=tf.reshape(indices, [-1, num_neighbors]), row_splits=row_splits),\
            tf.RaggedTensor.from_row_splits(values=tf.reshape(distances, [-1, num_neighbors]), row_splits=row_splits)

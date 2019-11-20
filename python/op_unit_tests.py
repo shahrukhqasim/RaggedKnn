@@ -34,7 +34,6 @@ def euclidean_squared(A, B):
 
 class RKNNTest(test.TestCase):
 
-    @test_util.run_gpu_only
     def test_bare_running(self):
         """
         This test is only for checking if there are no crashes when we run the op. No ragged tensors are used.
@@ -52,12 +51,11 @@ class RKNNTest(test.TestCase):
             result = rknn_op.RaggedKnn(num_neighbors=int(n_neighbors), row_splits=a, data=b, add_splits=False)
         # result = rknn.RaggedKnn(a,b)
 
-    @test_util.run_gpu_only
     def test_uniform_test(self):
         num_batch = 32
         num_features = 256
         num_neighbors = 8
-        num_vertices_per_batch = 320
+        num_vertices_per_batch = 3200
         data = np.random.uniform(size=(num_batch, num_vertices_per_batch, num_features))
         row_splits = np.arange(0, num_vertices_per_batch*(num_batch + 1), num_vertices_per_batch)
 
