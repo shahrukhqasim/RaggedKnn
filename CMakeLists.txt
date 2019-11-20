@@ -12,8 +12,11 @@ add_executable(ragged_nearest_neighbors
         ragged_knn_kernel.h)
 
 
-execute_process(COMMAND python -c 'import tensorflow as tf' OUTPUT_VARIABLE TF_CFLAGS)
-#execute_process(COMMAND python -c "import tensorflow as tf; print\(\" \".join(tf.sysconfig.get_link_flags\(\)\)\)" OUTPUT_VARIABLE TF_LFLAGS)
+add_executable(idk idk.cc)
 
-MESSAGE( ${TF_CFLAGS} )
-#MESSAGE(${TF_LFLAGS})
+
+#execute_process(COMMAND python -c 'import tensorflow as tf' OUTPUT_VARIABLE TF_CFLAGS)
+##execute_process(COMMAND python -c "import tensorflow as tf; print\(\" \".join(tf.sysconfig.get_link_flags\(\)\)\)" OUTPUT_VARIABLE TF_LFLAGS)
+#
+#MESSAGE( ${TF_CFLAGS} )
+##MESSAGE(${TF_LFLAGS})
