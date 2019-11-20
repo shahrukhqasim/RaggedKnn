@@ -180,10 +180,8 @@ __global__ void kernel_partial_find(const float *d_data, const int *d_row_splits
         y[0] = {s_neighbors_new[threadIdx.x].index};
 
         __syncthreads();
-//        if (threadIdx.x < 256) {
-//            BlockRadixSortX(temp_storage).Sort(x, y);
-//        }
-//        __syncthreads();
+        BlockRadixSortX(temp_storage).Sort(x, y);
+        __syncthreads();
 
 
         s_neighbors_new[threadIdx.x].distance = x[0];
@@ -247,6 +245,9 @@ struct RaggedKnnOpFunctor<GPUDevice, dummy> {
   void operator()(const GPUDevice& d, const float *d_data, const int *d_row_splits, int* d_output_indices,
           float *d_output_distances, int num_neighbors, int num_features, int num_batch, int num_total_vertices, bool add_splits) {
 //      printf("\n\n\nINF: Running GPU implementation\n(TODO: remove this message after verification)\n\n\n");
+
+
+    printf("Num features: %d\nNum neighbors: %d\nNum batch: %d\nNum total vertices: %d\n", num_features, num_neighbors, num_batch, num_total_vertices);
 
       kernel_partial_find<<<num_total_vertices, 256>>>(d_data, d_row_splits,
                          d_output_indices, d_output_distances, num_neighbors, num_features, num_batch, add_splits);

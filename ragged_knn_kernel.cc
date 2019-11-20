@@ -20,6 +20,13 @@ namespace tensorflow {
                     float *d_output_distance, int num_neighbors, int num_features, int num_batch, int num_total_vertices, bool add_splits) {
 //                assert(false); // We don't have a CPU implementation sorry :(
                 printf("Running CPU implementation but its nothing here sorry!\n");
+
+                for(int batch = 0; batch < num_batch; batch++) {
+                    int num_vertices_in_batch = d_row_splits[batch-1] - d_row_splits[batch];
+                    for(int i_vertex_in_batch = 0; i_vertex_in_batch < num_vertices_in_batch; i_vertex_in_batch++) {
+
+                    }
+                }
             }
         };
 
