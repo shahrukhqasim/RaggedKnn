@@ -53,8 +53,8 @@ class RKNNTest(test.TestCase):
 
     def test_uniform_test(self):
         num_batch = 32
-        num_features = 256
-        num_neighbors = 8
+        num_features = 8
+        num_neighbors = 16
         num_vertices_per_batch = 3200
         data = np.random.uniform(size=(num_batch, num_vertices_per_batch, num_features))
         row_splits = np.arange(0, num_vertices_per_batch*(num_batch + 1), num_vertices_per_batch)

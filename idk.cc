@@ -25,8 +25,8 @@ public:
 
 
 int main() {
-    std::vector<float> data = {2, 8, 7, 5, 9, 3, 6, 1, 10, 4};
-    int k=4;
+    std::vector<float> data = {2, 8, 7};//, 5, 9, 3, 6, 1, 10, 4};
+    unsigned long k=4;
 
     std::priority_queue <combined, std::vector<combined>, combinedcomparator> topneighbors;
     for (int i = 0; i < data.size(); i++) {
@@ -39,6 +39,8 @@ int main() {
         }
     }
 
+
+    k = topneighbors.size();
     std::vector<float> res(k);
     for (int i = 0; i < k; ++i) {
         res[k - i - 1] = topneighbors.top().distance;

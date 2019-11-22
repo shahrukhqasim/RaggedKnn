@@ -35,7 +35,7 @@ namespace tensorflow {
             void operator()(const CPUDevice &d, const float *d_data, const int *d_row_splits, int *d_output_indices,
                     float *d_output_distance, int num_neighbors, int num_features, int num_batch, int num_total_vertices, bool add_splits) {
 //                assert(false); // We don't have a CPU implementation sorry :(
-                printf("Running CPU implementation (in testing)!\n");
+//                printf("Running CPU implementation (in testing)!\n");
 
                 for(int batch = 0; batch < num_batch; batch++) {
                     int num_vertices_in_batch = d_row_splits[batch-1] - d_row_splits[batch];
@@ -61,8 +61,18 @@ namespace tensorflow {
                         }
 
                         for(int j_top_neighbor = 0; j_top_neighbor< num_neighbors; j_top_neighbor++) {
-                            d_output_distance[i_vertex_in_batch*(num_neighbors+1)-j_top_neighbor-1] = topneighbors.top().distance;
-                            d_output_indices[i_vertex_in_batch*(num_neighbors+1)-j_top_neighbor-1] = topneighbors.top().index;
+                            if (j_top_neighbor < topneighbors.size()) {
+                                d_output_distance[i_vertex_in_batch * (num_neighbors + 1) - j_top_neighbor -
+                                                  1] = topneighbors.top().distance;
+                                d_output_indices[i_vertex_in_batch * (num_neighbors + 1) - j_top_neighbor -
+                                                 1] = topneighbors.top().index;
+                            }
+                            else {
+                                d_output_distance[i_vertex_in_batch * (num_neighbors + 1) - j_top_neighbor -
+                                                  1] = 1e+037;
+                                d_output_indices[i_vertex_in_batch * (num_neighbors + 1) - j_top_neighbor -
+                                                 1] = 999999;
+                            }
                         }
                     }
                 }
@@ -126,5 +136,4 @@ REGISTER_KERNEL_BUILDER(Name("RaggedKnn").Device(DEVICE_GPU), RaggedKnnOp<GPUDev
 #endif  // GOOGLE_CUDA
 
     }
-
 }

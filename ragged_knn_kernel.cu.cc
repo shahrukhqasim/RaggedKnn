@@ -247,12 +247,13 @@ struct RaggedKnnOpFunctor<GPUDevice, dummy> {
 //      printf("\n\n\nINF: Running GPU implementation\n(TODO: remove this message after verification)\n\n\n");
 
 
-    printf("Num features: %d\nNum neighbors: %d\nNum batch: %d\nNum total vertices: %d\n", num_features, num_neighbors, num_batch, num_total_vertices);
+//    printf("Num features: %d\nNum neighbors: %d\nNum batch: %d\nNum total vertices: %d\n", num_features, num_neighbors, num_batch, num_total_vertices);
 
       kernel_partial_find<<<num_total_vertices, 256>>>(d_data, d_row_splits,
                          d_output_indices, d_output_distances, num_neighbors, num_features, num_batch, add_splits);
   }
 };
+
 
 
 template struct RaggedKnnOpFunctor<GPUDevice, int>;
