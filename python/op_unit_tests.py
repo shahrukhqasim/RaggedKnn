@@ -34,28 +34,28 @@ def euclidean_squared(A, B):
 
 class RKNNTest(test.TestCase):
 
-    def test_bare_running(self):
-        """
-        This test is only for checking if there are no crashes when we run the op. No ragged tensors are used.
-
-        :return:
-        """
-        n_batch = 2
-        n_features = 3
-        n_neighbors = 10
-        a = np.array([0, 1000, 3000, 3500, 3700, 4800, 5500])
-        b = np.random.uniform(size=(5500, 3))
-        a = tf.constant(a, dtype=tf.int32)
-        b = tf.constant(b, dtype=tf.float32)
-        with self.test_session():
-            result = rknn_op.RaggedKnn(num_neighbors=int(n_neighbors), row_splits=a, data=b, add_splits=False)
-        # result = rknn.RaggedKnn(a,b)
+    # def test_bare_running(self):
+    #     """
+    #     This test is only for checking if there are no crashes when we run the op. No ragged tensors are used.
+    #
+    #     :return:
+    #     """
+    #     n_batch = 2
+    #     n_features = 3
+    #     n_neighbors = 10
+    #     a = np.array([0, 1000, 3000, 3500, 3700, 4800, 5500])
+    #     b = np.random.uniform(size=(5500, 3))
+    #     a = tf.constant(a, dtype=tf.int32)
+    #     b = tf.constant(b, dtype=tf.float32)
+    #     with self.test_session():
+    #         result = rknn_op.RaggedKnn(num_neighbors=int(n_neighbors), row_splits=a, data=b, add_splits=False)
+    #     # result = rknn.RaggedKnn(a,b)
 
     def test_uniform_test(self):
-        num_batch = 32
-        num_features = 8
-        num_neighbors = 16
-        num_vertices_per_batch = 3200
+        num_batch = 3
+        num_features = 32
+        num_neighbors = 40
+        num_vertices_per_batch = 562
         data = np.random.uniform(size=(num_batch, num_vertices_per_batch, num_features))
         row_splits = np.arange(0, num_vertices_per_batch*(num_batch + 1), num_vertices_per_batch)
 
@@ -75,16 +75,20 @@ class RKNNTest(test.TestCase):
         data = tf.RaggedTensor.from_row_splits(values=tf.reshape(data, (-1, num_features)), row_splits=row_splits)
 
         t0 = time.time()
-        y,_ = rknn_ragged(data, num_neighbors=num_neighbors)
+        y,ddd = rknn_ragged(data, num_neighbors=num_neighbors)
         t1 = time.time()
         rk_time =t1-t0
 
         y = tf.reshape(y.values, (num_batch, num_vertices_per_batch, num_neighbors))
+        ddd = tf.reshape(ddd.values, (num_batch, num_vertices_per_batch, num_neighbors))
 
         mismatch = float(np.sum(x.numpy()!=y.numpy()))/x.numpy().size
 
 
-        print(y.numpy())
+        print(y.numpy().tolist())
+        print(ddd.numpy().tolist())
+
+        print(np.max(y), np.min(y))
 
 
         print(x.shape)

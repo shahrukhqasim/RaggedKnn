@@ -37,18 +37,20 @@ namespace tensorflow {
 //                assert(false); // We don't have a CPU implementation sorry :(
 //                printf("Running CPU implementation (in testing)!\n");
 
+
                 for(int batch = 0; batch < num_batch; batch++) {
-                    int num_vertices_in_batch = d_row_splits[batch-1] - d_row_splits[batch];
+                    int num_vertices_in_batch = d_row_splits[batch+1] - d_row_splits[batch];
+                    int my_split = d_row_splits[batch];
                     for(int i_vertex_in_batch = 0; i_vertex_in_batch < num_vertices_in_batch; i_vertex_in_batch++) {
                         std::priority_queue <combined, std::vector<combined>, combinedcomparator> topneighbors;
 
                         for(int j_vertex_in_batch = 0; j_vertex_in_batch < num_vertices_in_batch; j_vertex_in_batch++) {
                             int index = j_vertex_in_batch;
                             float distance = 0;
-                            for(int i_feature = 0; i_feature < num_vertices_in_batch; i_feature++) {
-                                float a = d_data[i_vertex_in_batch*num_features + i_feature];
-                                float b = d_data[j_vertex_in_batch*num_features + i_feature];
-                                distance += (a-b)*(a+b);
+                            for(int i_feature = 0; i_feature < num_features; i_feature++) {
+                                float a = d_data[my_split*num_features + i_vertex_in_batch*num_features + i_feature];
+                                float b = d_data[my_split*num_features + j_vertex_in_batch*num_features + i_feature];
+                                distance += (a-b)*(a-b);
                             }
 
                             if (topneighbors.size() < num_neighbors) {
@@ -59,18 +61,20 @@ namespace tensorflow {
                                 topneighbors.push({index, distance});
                             }
                         }
+                        unsigned int top_neighbors_size = topneighbors.size();
 
                         for(int j_top_neighbor = 0; j_top_neighbor< num_neighbors; j_top_neighbor++) {
-                            if (j_top_neighbor < topneighbors.size()) {
-                                d_output_distance[i_vertex_in_batch * (num_neighbors + 1) - j_top_neighbor -
+                            if (j_top_neighbor < top_neighbors_size) {
+                                d_output_distance[my_split*num_neighbors + (i_vertex_in_batch+1) * (num_neighbors) - j_top_neighbor -
                                                   1] = topneighbors.top().distance;
-                                d_output_indices[i_vertex_in_batch * (num_neighbors + 1) - j_top_neighbor -
+                                d_output_indices[my_split*num_neighbors + (i_vertex_in_batch+1) * (num_neighbors) - j_top_neighbor -
                                                  1] = topneighbors.top().index;
+                                topneighbors.pop();
                             }
                             else {
-                                d_output_distance[i_vertex_in_batch * (num_neighbors + 1) - j_top_neighbor -
+                                d_output_distance[my_split*num_neighbors+(i_vertex_in_batch+1) * (num_neighbors) - j_top_neighbor -
                                                   1] = 1e+037;
-                                d_output_indices[i_vertex_in_batch * (num_neighbors + 1) - j_top_neighbor -
+                                d_output_indices[my_split*num_neighbors+(i_vertex_in_batch+1) * (num_neighbors) - j_top_neighbor -
                                                  1] = 999999;
                             }
                         }
@@ -112,12 +116,29 @@ namespace tensorflow {
                 Tensor *output_tensor_distances = NULL;
                 OP_REQUIRES_OK(context, context->allocate_output(1, outputShape, &output_tensor_distances));
 
+
+//                printf("XXX\n");
+//                for(int i=0;i<num_batch;i++) {
+//                    printf("%d ", row_splits_tensor.flat<int>().data()[i]);
+//                }
+//
+//                printf("\nXXX\n");
+
+
 //                printf("About to do the actual computation\n");
 
                 RaggedKnnOpFunctor<Device, int>()(context->eigen_device<Device>(), data_tensor.flat<float>().data(),
                         row_splits_tensor.flat<int>().data(), output_tensor_indices->flat<int>().data(),
                         output_tensor_distances->flat<float>().data(), num_neighbors, num_features,num_batch,
                         total_vertices, add_splits);
+
+
+//                for(int i=0;i<total_vertices;i++) {
+//                    for(int j=0;j<num_neighbors;j++) {
+//                            printf("%d ", output_tensor_indices->flat<int>().data()[i*num_neighbors+j]);
+//                    }
+//                    printf("\n");
+//                }
 
 
             }

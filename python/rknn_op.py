@@ -3,7 +3,7 @@ import numpy as np
 
 
 
-rknn_op = tf.load_op_library('/afs/cern.ch/work/s/sqasim/workspace_phd_1/Repos1/CudaTests/ragged_knn/ragged_knn_kernel.so')
+rknn_op = tf.load_op_library('ragged_knn_kernel.so')
 
 
 
